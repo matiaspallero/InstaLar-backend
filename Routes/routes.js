@@ -3,6 +3,7 @@ import * as tecnicosController from '../Controllers/CTS_TB_Tecnicos.js';
 import * as clientesController from '../Controllers/CTS_TB_Clientes.js';
 import * as sedesController from '../Controllers/CTS_TB_Sedes.js';
 import * as serviciosController from '../Controllers/CTS_TB_Servicios.js';
+import * as authController from '../Controllers/CTS_TB_AuthController.js';
 
 const router = express.Router();
 
@@ -44,5 +45,10 @@ router.post('/servicios', serviciosController.crearServicio);
 router.put('/servicios/:id', serviciosController.actualizarServicio);
 router.patch('/servicios/:id/estado', serviciosController.actualizarEstadoServicio);
 router.delete('/servicios/:id', serviciosController.eliminarServicio);
+
+// ============================================
+// RUTAS PARA AUTENTICACIÓN
+// ============================================
+router.post('/login', authController.login);
 
 export default router;
