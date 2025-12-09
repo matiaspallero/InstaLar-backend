@@ -8,9 +8,9 @@ export const obtenerTecnicos = async (req, res) => {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    res.json(data);
+    res.json({ success: true, data });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ success: false, error: error.message });
   }
 };
 
@@ -23,10 +23,17 @@ export const obtenerTecnicoPorId = async (req, res) => {
       .eq('id', id)
       .single();
 
-    if (error) throw error;
-    res.json(data);
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return res.status(404).json({ success: false, error: 'Técnico no encontrado' });
+      }
+      throw error;
+    }
+
+    res.json({ success: true, data });
   } catch (error) {
-    res.status(404).json({ error: 'Técnico no encontrado' });
+    console.error('Error al obtener técnico por ID:', error);
+    res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 };
 
@@ -39,9 +46,9 @@ export const crearTecnico = async (req, res) => {
       .single();
 
     if (error) throw error;
-    res.status(201).json(data);
+    res.status(201).json({ success: true, data });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    res.status(400).json({ success: false, error: error.message });
   }
 };
 
@@ -55,10 +62,17 @@ export const actualizarTecnico = async (req, res) => {
       .select()
       .single();
 
-    if (error) throw error;
-    res.json(data);
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return res.status(404).json({ success: false, error: 'Técnico no encontrado para actualizar' });
+      }
+      throw error;
+    }
+
+    res.json({ success: true, data });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.error('Error al actualizar técnico:', error);
+    res.status(400).json({ success: false, error: error.message });
   }
 };
 
@@ -71,9 +85,9 @@ export const eliminarTecnico = async (req, res) => {
       .eq('id', id);
 
     if (error) throw error;
-    res.json({ message: 'Técnico eliminado correctamente' });
+    res.json({ success: true, message: 'Técnico eliminado correctamente' });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    res.status(500).json({ success: false, error: error.message });
   }
 };
 
@@ -86,8 +100,8 @@ export const obtenerTecnicosDisponibles = async (req, res) => {
       .order('calificacion', { ascending: false });
 
     if (error) throw error;
-    res.json(data);
+    res.json({ success: true, data });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ success: false, error: error.message });
   }
 };

@@ -49,6 +49,10 @@ router.delete('/servicios/:id', serviciosController.eliminarServicio);
 // ============================================
 // RUTAS PARA AUTENTICACIÓN
 // ============================================
-router.post('/login', authController.login);
+router.post('/auth/register', authController.registrarUsuario);
+router.post('/auth/login', authController.loginUsuario);
+router.post('/auth/logout', authController.logout);
+//router.put('/auth/change-password', authController.cambiarPassword);
+router.get('/auth/verify-token', authController.verifyToken);
 
 export default router;
