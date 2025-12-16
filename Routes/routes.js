@@ -53,6 +53,6 @@ router.post('/auth/register', authController.registrarUsuario);
 router.post('/auth/login', authController.loginUsuario);
 router.post('/auth/logout', authController.logout);
 //router.put('/auth/change-password', authController.cambiarPassword);
-router.get('/auth/verify-token', authController.verifyToken);
+router.get('/auth/verify', authController.verifyToken);
 
 export default router;
