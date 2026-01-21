@@ -1,114 +1,63 @@
 import { supabase } from '../config/supabase.js';
 
 export const registrarUsuario = async (req, res) => {
+  // 📢 LOG PARA VERIFICAR SI EL SERVIDOR SE ACTUALIZÓ
+  console.log("🔥🔥🔥 EJECUTANDO REGISTRO NUEVO V3 🔥🔥🔥"); 
+  
   try {
-    // Declarar SOLO UNA VEZ todas las variables
-    let newAuthUser = null; // Para poder limpiar en caso de error
+    const { email, password, nombre, apellido = '', telefono = '', rol = 'cliente', empresa = '', direccion = '' } = req.body;
 
-    const {
-      email, 
-      password, 
-      nombre, 
-      apellido = '',
-      telefono = '',
-      rol = 'cliente',
-      empresa = '',
-      especialidad = '',
-      direccion = '',
-      estado = 'activo'
-    } = req.body;
-
-    // Validaciones
-    if (!email || !password || !nombre) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email, password y nombre son requeridos'
-      });
-    }
-
-    // 1. Registrar en Supabase Auth
-    // Paso 1: Registrar en Supabase Auth
+    // 1. REGISTRO AUTH
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
-      options: {
-        data: { nombre, apellido, rol }
-      }
+      options: { data: { nombre, apellido, rol } }
     });
 
     if (authError) throw authError;
-    if (!authData.user) throw new Error('No se pudo crear el usuario');
-    if (!authData.user) throw new Error('No se pudo crear el usuario en Supabase Auth');
-    newAuthUser = authData.user;
+    if (!authData.user) throw new Error('No se creó usuario en Auth');
 
-    // 2. Insertar en tabla usuarios
-    // Paso 2: Insertar el perfil en tu tabla 'usuarios'
+    // 2. INSERTAR EN DB
     const { data: userData, error: dbError } = await supabase
       .from('usuarios')
       .insert([{
         id: authData.user.id,
-        id: newAuthUser.id,
         email,
         nombre,
         apellido,
         telefono,
         rol,
         empresa,
-        especialidad,
         direccion,
-        estado
+        estado: 'activo'
       }])
       .select()
       .single();
 
     if (dbError) {
-      // Si falla, eliminar el usuario de auth
       await supabase.auth.admin.deleteUser(authData.user.id);
-      // Si la inserción del perfil falla, eliminamos el usuario de Auth para mantener la consistencia.
-      await supabase.auth.admin.deleteUser(newAuthUser.id);
       throw dbError;
     }
 
-    // 3. Crear sesión
-    const { data: sessionData, error: sessionError } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-    // Paso 3: Devolver la respuesta.
-    // La llamada a signUp ya devuelve una sesión si autoconfirm está activado.
-    // No es necesario hacer un signInWithPassword de nuevo.
-    if (authData.session) {
-      return res.status(201).json({
-        success: true,
-        message: 'Usuario registrado y logueado exitosamente.',
-        user: userData,
-        token: authData.session.access_token
-      });
-    } else {
-      // Si autoconfirm está desactivado, el usuario debe verificar su email.
-      return res.status(201).json({
-        success: true,
-        message: 'Usuario registrado. Por favor, revisa tu email para confirmar tu cuenta.',
-        user: userData,
-        token: null // No hay token hasta la confirmación
-      });
-    }
+    // 📢 LOG PARA VER QUÉ DATOS TENEMOS ANTES DE ENVIAR
+    console.log("✅ USUARIO CREADO EN DB:", userData);
 
-    if (sessionError) throw sessionError;
-
-    return res.status(201).json({
+    // 3. RESPUESTA
+    // Forzamos un objeto nuevo y limpio para asegurar que Express no elimine nada
+    const respuesta = {
       success: true,
       message: 'Usuario registrado exitosamente',
-      user: userData,
-      token: sessionData.session.access_token
-    });
+      user: userData, // AQUÍ DEBE ESTAR EL OBJETO
+      token: authData.session?.access_token || 'token_manual'
+    };
+
+    console.log("📤 ENVIANDO RESPUESTA:", respuesta);
+    
+    return res.status(201).json(respuesta);
 
   } catch (error) {
-    console.error('Error en registro:', error);
-    return res.status(500).json({
-      success: false,
-      message: error.message || 'Error al registrar usuario'
-    });
+    console.error('❌ ERROR BACKEND:', error);
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -162,27 +111,39 @@ export const loginUsuario = async (req, res) => {
 
 export const verifyToken = async (req, res) => {
   try {
+    // 1. Obtenemos el token del encabezado
     const token = req.headers.authorization?.split(' ')[1];
-    
-    if (!token) {
-      return res.status(401).json({ valid: false, message: 'No se proporcionó token.' });
+    if (!token) return res.status(401).json({ valid: false, message: 'No token' });
+
+    // 2. Verificamos con Supabase Auth (¿Es un usuario real?)
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+
+    if (error || !user) {
+      return res.status(401).json({ valid: false, message: 'Token inválido' });
     }
 
-    const { data, error } = await supabase.auth.getUser(token);
-    
-    if (error || !data.user) {
-      return res.status(401).json({ valid: false, message: 'Token inválido o expirado.' });
-    }
+    // 3. ¡EL PASO QUE FALTABA! Buscamos el ROL en la tabla 'usuarios'
+    const { data: perfilPublico } = await supabase
+      .from('usuarios')
+      .select('rol, nombre, apellido') // Pedimos explícitamente el rol
+      .eq('id', user.id)
+      .single();
 
-    // Devolvemos solo la información necesaria y segura para el frontend
-    const { id, email, user_metadata } = data.user;
-    return res.json({ 
-      valid: true, 
-      user: { id, email, rol: user_metadata.rol, nombre: user_metadata.nombre } 
+    // 4. Respondemos mezclando los datos de Auth + Datos Públicos
+    return res.json({
+      valid: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        // Si no encuentra perfil, asume 'cliente' por seguridad
+        rol: perfilPublico?.rol || 'cliente', 
+        nombre: perfilPublico?.nombre || 'Usuario'
+      }
     });
+
   } catch (error) {
-    console.error('Error al verificar token:', error);
-    return res.status(401).json({ valid: false, message: 'Error al procesar el token.' });
+    console.error(error);
+    return res.status(500).json({ valid: false, error: error.message });
   }
 };
 

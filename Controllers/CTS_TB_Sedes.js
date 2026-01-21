@@ -45,6 +45,33 @@ export const obtenerSedesPorCliente = async (req, res) => {
   }
 };
 
+export const obtenerMisSedes = async (req, res) => {
+  try {
+    const { usuario_id } = req.params;
+
+    // 1. Buscamos el ID de cliente
+    const { data: cliente } = await supabase
+      .from('clientes')
+      .select('id')
+      .eq('usuario_id', usuario_id)
+      .single();
+
+    if (!cliente) return res.status(404).json({ success: false, message: 'Cliente no encontrado' });
+
+    // 2. Buscamos sus sedes
+    const { data: sedes, error } = await supabase
+      .from('sedes')
+      .select('*')
+      .eq('cliente_id', cliente.id);
+
+    if (error) throw error;
+    res.json({ success: true, data: sedes });
+
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
 export const crearSede = async (req, res) => {
   try {
     const { data, error } = await supabase

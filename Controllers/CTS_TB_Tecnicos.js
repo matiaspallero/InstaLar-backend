@@ -8,8 +8,10 @@ export const obtenerTecnicos = async (req, res) => {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
+
     res.json({ success: true, data });
   } catch (error) {
+    console.error('Error al obtener técnicos:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 };

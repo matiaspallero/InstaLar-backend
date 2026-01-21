@@ -39,16 +39,40 @@ export const obtenerClientePorId = async (req, res) => {
 
 export const crearCliente = async (req, res) => {
   try {
+    // Recibimos los datos del formulario de registro
+    // nombre = Nombre de la persona (Contacto)
+    // empresa = Nombre de la empresa
+    const { nombre, empresa, email, telefono, direccion, usuario_id } = req.body;
+
+    // MAPEO DE DATOS: Ajustamos lo que llega a las columnas de TU tabla
+    const datosParaDB = {
+      nombre: empresa || nombre, // Columna 'nombre' = Nombre de la Empresa
+      contacto: nombre,          // Columna 'contacto' = Nombre de la Persona
+      email,
+      telefono,
+      direccion,
+      ciudad: 'Sin especificar', // Valor por defecto (puedes cambiarlo)
+      ruc: '00000000000',        // Valor por defecto
+      usuario_id: usuario_id || null
+    };
+
+    // Insertamos en la tabla 'clientes'
     const { data, error } = await supabase
       .from('clientes')
-      .insert([req.body])
+      .insert([datosParaDB])
       .select()
       .single();
 
     if (error) throw error;
-    res.status(201).json({ success: true, data });
+
+    return res.status(201).json({ success: true, data });
+
   } catch (error) {
-    res.status(400).json({ success: false, error: error.message });
+    console.error('Error al crear cliente:', error);
+    return res.status(400).json({ 
+      success: false, 
+      message: error.message || 'Error al crear el cliente' 
+    });
   }
 };
 
