@@ -147,15 +147,14 @@ export const solicitarServicioCliente = async (req, res) => {
   try {
     // Recibimos TODOS los datos del formulario
     const { 
-      usuario_id, 
-      sede_id, 
+      cliente_id, 
+      sede_id,
+      equipo_id,
       descripcion, 
       tipo, 
       fecha, 
       hora, 
-      equipo, 
-      marca, 
-      modelo 
+      prioridad, 
     } = req.body;
 
     console.log("📝 Nueva solicitud de servicio recibida");
@@ -169,7 +168,7 @@ export const solicitarServicioCliente = async (req, res) => {
     const { data: cliente } = await supabase
       .from('clientes')
       .select('id')
-      .eq('usuario_id', usuario_id)
+      .eq('usuario_id', cliente_id)
       .single();
 
     if (!cliente) {
@@ -182,14 +181,12 @@ export const solicitarServicioCliente = async (req, res) => {
       .insert([{
         cliente_id: cliente.id,
         sede_id: sede_id,
-        tipo: tipo,                // Columna 'tipo' (varchar)
-        fecha: fecha,              // Columna 'fecha' (date)
-        hora: hora,                // Columna 'hora' (time)
-        descripcion: descripcion,  // Columna 'descripcion' (text)
-        equipo: equipo || null,    // Columnas opcionales
-        marca: marca || null,
-        modelo: modelo || null,
-        estado: 'pendiente',       // Estado inicial por defecto
+        equipo_id: equipo_id || null, // Columna 'equipo' (varchar)
+        tipo: tipo,                   // Columna 'tipo' (varchar)
+        fecha: fecha,                 // Columna 'fecha' (date)
+        hora: hora,                   // Columna 'hora' (time)
+        descripcion: descripcion,     // Columna 'descripcion' (text)
+        estado: 'pendiente',          // Estado inicial por defecto
         created_at: new Date()
       }])
       .select()

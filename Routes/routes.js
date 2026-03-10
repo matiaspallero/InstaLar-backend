@@ -5,6 +5,7 @@ import * as sedesController from '../Controllers/CTS_TB_Sedes.js';
 import * as serviciosController from '../Controllers/CTS_TB_Servicios.js';
 import * as solicitudesController from '../Controllers/CTS_TB_SolicitudesController.js';
 import * as authController from '../Controllers/CTS_TB_AuthController.js';
+import * as equiposController from '../Controllers/CTS_TB_Equipos.js';
 
 import { protect } from '../Middleware/authMiddleware.js';
 
@@ -67,6 +68,19 @@ router.post('/solicitudes', authController.verifyToken, solicitudesController.cr
 router.put('/solicitudes/:id', authController.verifyToken, solicitudesController.actualizarSolicitud);
 //router.patch('/solicitudes/:id/asignar-tecnico', authController.verifyToken, solicitudesController.asignarTecnico); // Para el Admin
 //router.delete('/solicitudes/:id', authController.verifyToken, solicitudesController.eliminarSolicitud);
+
+// ============================================
+// RUTAS PARA EQUIPOS
+// ============================================
+router.get('/equipos', protect, equiposController.obtenerEquipos);
+router.get('/equipos/:id', protect, equiposController.obtenerEquipoPorId);
+router.get('/equipos/:id/servicios', protect, equiposController.obtenerServiciosEquipo);
+router.get('/equipos/sede/:sede_id', protect, equiposController.obtenerEquiposPorSede);
+router.get('/equipos/cliente/:cliente_id', protect, equiposController.obtenerEquiposPorCliente);
+router.get('/equipos/serie/:serie', protect, equiposController.obtenerEquipoPorSerie);
+router.post('/equipos', protect, equiposController.crearEquipo);
+router.put('/equipos/:id', protect, equiposController.actualizarEquipo);
+router.delete('/equipos/:id', protect, equiposController.eliminarEquipo);
 
 // ============================================
 // RUTAS PARA AUTENTICACIÓN

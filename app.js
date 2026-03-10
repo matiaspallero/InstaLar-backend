@@ -36,7 +36,9 @@ app.get('/', (req, res) => {
       tecnicos: '/api/tecnicos',
       clientes: '/api/clientes',
       sedes: '/api/sedes',
-      servicios: '/api/servicios'
+      servicios: '/api/servicios',
+      equipos: '/api/equipos',
+      solicitudes: '/api/solicitudes'
     }
   });
 });
