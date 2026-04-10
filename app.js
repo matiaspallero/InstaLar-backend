@@ -10,7 +10,7 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors({
-  origin: ['https://instalar-backend.vercel.app',
+  origin: ['https://instalar.netlify.app',
   'http://localhost:5173'
   ],
   credentials: true
