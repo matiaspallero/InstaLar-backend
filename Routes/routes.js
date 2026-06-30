@@ -20,6 +20,7 @@ router.get('/tecnicos/:id', tecnicosController.obtenerTecnicoPorId);
 router.post('/tecnicos', tecnicosController.crearTecnico);
 router.put('/tecnicos/:id', tecnicosController.actualizarTecnico);
 router.delete('/tecnicos/:id', tecnicosController.eliminarTecnico);
+router.patch('/tecnicos/:id/restaurar', tecnicosController.restaurarTecnico);
 
 // ============================================
 // RUTAS PARA CLIENTES
@@ -29,6 +30,7 @@ router.get('/clientes/:id', clientesController.obtenerClientePorId);
 router.post('/clientes', clientesController.crearCliente);
 router.put('/clientes/:id', clientesController.actualizarCliente);
 router.delete('/clientes/:id', clientesController.eliminarCliente);
+router.patch('/clientes/:id/restaurar', clientesController.restaurarCliente);
 
 // ============================================
 // RUTAS PARA SEDES
@@ -40,6 +42,7 @@ router.get('/sedes/usuario/:usuario_id', protect, sedesController.obtenerMisSede
 router.post('/sedes', sedesController.crearSede);
 router.put('/sedes/:id', sedesController.actualizarSede);
 router.delete('/sedes/:id', sedesController.eliminarSede);
+router.patch('/sedes/:id/restaurar', sedesController.restaurarSede);
 
 // ============================================
 // RUTAS PARA SERVICIOS
@@ -51,6 +54,7 @@ router.post('/servicios', protect, serviciosController.crearServicio);
 router.put('/servicios/:id', protect, serviciosController.actualizarServicio);
 router.patch('/servicios/:id/estado', protect, serviciosController.actualizarEstadoServicio);
 router.delete('/servicios/:id', protect, serviciosController.eliminarServicio);
+router.patch('/servicios/:id/restaurar', protect, serviciosController.restaurarServicio);
 router.post('/servicios/solicitar', protect, serviciosController.solicitarServicioCliente);
 // Nueva ruta para obtener servicios pendientes de asignación
 router.get('/solicitudes', protect, serviciosController.obtenerSolicitudesPendientes);
@@ -66,8 +70,9 @@ router.get('/servicios/tecnico/mis-trabajos', protect, serviciosController.obten
 router.get('/solicitudes/:id', authController.verifyToken, solicitudesController.obtenerSolicitudPorId);
 router.post('/solicitudes', authController.verifyToken, solicitudesController.crearSolicitud);
 router.put('/solicitudes/:id', authController.verifyToken, solicitudesController.actualizarSolicitud);
+router.delete('/solicitudes/:id', authController.verifyToken, solicitudesController.eliminarSolicitud);
+router.patch('/solicitudes/:id/restaurar', authController.verifyToken, solicitudesController.restaurarSolicitud);
 //router.patch('/solicitudes/:id/asignar-tecnico', authController.verifyToken, solicitudesController.asignarTecnico); // Para el Admin
-//router.delete('/solicitudes/:id', authController.verifyToken, solicitudesController.eliminarSolicitud);
 
 // ============================================
 // RUTAS PARA EQUIPOS
@@ -81,14 +86,16 @@ router.get('/equipos/serie/:serie', protect, equiposController.obtenerEquipoPorS
 router.post('/equipos', protect, equiposController.crearEquipo);
 router.put('/equipos/:id', protect, equiposController.actualizarEquipo);
 router.delete('/equipos/:id', protect, equiposController.eliminarEquipo);
+router.patch('/equipos/:id/restaurar', protect, equiposController.restaurarEquipo);
 
 // ============================================
 // RUTAS PARA AUTENTICACIÓN
 // ============================================
 router.post('/auth/register', authController.registrarUsuario);
 router.post('/auth/login', authController.loginUsuario);
+router.post('/auth/recuperar-password', authController.recuperarPassword);
 router.post('/auth/logout', authController.logout);
-//router.put('/auth/change-password', authController.cambiarPassword);
+router.put('/auth/change-password', protect, authController.cambiarPassword);
 router.get('/auth/verify', authController.verifyToken);
 
 export default router;

@@ -11,6 +11,7 @@ console.log('📁 CTS_TB_AuthController.js:');
 console.log('   Exportaciones:', Object.keys(authController));
 console.log('   - registrarUsuario:', typeof authController.registrarUsuario);
 console.log('   - loginUsuario:', typeof authController.loginUsuario);
+console.log('   - recuperarPassword:', typeof authController.recuperarPassword);
 console.log('   - cambiarPassword:', typeof authController.cambiarPassword);
 
 console.log('\n📁 CTS_TB_Clientes.js:');
@@ -60,7 +61,7 @@ console.log('\n=== FIN DE VERIFICACIÓN ===\n');
 
 // Verificar funciones undefined
 const funcionesRequeridas = {
-  authController: ['registrarUsuario', 'loginUsuario', 'cambiarPassword'],
+  authController: ['registrarUsuario', 'loginUsuario', 'recuperarPassword', 'cambiarPassword'],
   clientesController: ['obtenerClientes', 'obtenerClientePorId', 'crearCliente', 'actualizarCliente', 'eliminarCliente'],
   sedesController: ['obtenerSedes', 'obtenerSedePorId', 'obtenerSedesPorCliente', 'crearSede', 'actualizarSede', 'eliminarSede'],
   serviciosController: ['obtenerServicios', 'obtenerServicioPorId', 'crearServicio', 'actualizarServicio', 'actualizarEstadoServicio', 'eliminarServicio'],

@@ -5,7 +5,7 @@ export const registrarUsuario = async (req, res) => {
   console.log("🔥🔥🔥 EJECUTANDO REGISTRO NUEVO V3 🔥🔥🔥"); 
   
   try {
-    const { email, password, nombre, apellido = '', telefono = '', rol = 'cliente', empresa = '', direccion = '' } = req.body;
+    const { email, password, nombre, apellido = '', telefono = '', rol = 'cliente', empresa = '', direccion = '', ciudad = '' } = req.body;
 
     // 1. REGISTRO AUTH
     const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -92,7 +92,15 @@ export const loginUsuario = async (req, res) => {
       .eq('email', email)
       .single();
 
-    if (userError) throw userError;
+    if (userError) {
+      if (userError.code === 'PGRST116') {
+        return res.status(404).json({
+          success: false,
+          message: 'El perfil de este usuario no existe en la base de datos (registro incompleto). Póngase en contacto con soporte o regístrese con otro correo.'
+        });
+      }
+      throw userError;
+    }
 
     return res.json({
       success: true,
@@ -102,9 +110,87 @@ export const loginUsuario = async (req, res) => {
 
   } catch (error) {
     console.error('Error en login:', error);
-    return res.status(401).json({
+    return res.status(error.code === 'PGRST116' ? 404 : 401).json({
       success: false,
-      message: 'Error interno del servidor durante el login.'
+      message: error.message || 'Error interno del servidor durante el login.'
+    });
+  }
+};
+
+export const recuperarPassword = async (req, res) => {
+  try {
+    const { email, redirectTo } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'El email es requerido'
+      });
+    }
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: redirectTo || process.env.SUPABASE_PASSWORD_RESET_REDIRECT_URL
+    });
+
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: error.message
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Se envió un correo para recuperar la contraseña'
+    });
+  } catch (error) {
+    console.error('Error en recuperarPassword:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor al solicitar recuperación de contraseña'
+    });
+  }
+};
+
+export const cambiarPassword = async (req, res) => {
+  try {
+    const { newPassword, password } = req.body;
+    const passwordToUpdate = newPassword || password;
+
+    if (!req.user?.id) {
+      return res.status(401).json({
+        success: false,
+        message: 'No autorizado'
+      });
+    }
+
+    if (!passwordToUpdate) {
+      return res.status(400).json({
+        success: false,
+        message: 'La nueva contraseña es requerida'
+      });
+    }
+
+    const { error } = await supabase.auth.admin.updateUserById(req.user.id, {
+      password: passwordToUpdate
+    });
+
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: error.message
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Contraseña actualizada correctamente'
+    });
+  } catch (error) {
+    console.error('Error en cambiarPassword:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor al cambiar la contraseña'
     });
   }
 };

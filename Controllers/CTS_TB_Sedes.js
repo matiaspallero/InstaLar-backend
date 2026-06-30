@@ -5,6 +5,7 @@ export const obtenerSedes = async (req, res) => {
     const { data, error } = await supabase
       .from('sedes')
       .select('*, clientes(nombre)')
+      .eq('is_deleted', false)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -21,6 +22,7 @@ export const obtenerSedePorId = async (req, res) => {
       .from('sedes')
       .select('*, clientes(nombre)')
       .eq('id', id)
+      .eq('is_deleted', false)
       .single();
 
     if (error) throw error;
@@ -36,7 +38,8 @@ export const obtenerSedesPorCliente = async (req, res) => {
     const { data, error } = await supabase
       .from('sedes')
       .select('*')
-      .eq('cliente_id', clienteId);
+      .eq('cliente_id', clienteId)
+      .eq('is_deleted', false);
 
     if (error) throw error;
     res.json(data);
@@ -62,7 +65,8 @@ export const obtenerMisSedes = async (req, res) => {
     const { data: sedes, error } = await supabase
       .from('sedes')
       .select('*')
-      .eq('cliente_id', cliente.id);
+      .eq('cliente_id', cliente.id)
+      .eq('is_deleted', false);
 
     if (error) throw error;
     res.json({ success: true, data: sedes });
@@ -109,11 +113,33 @@ export const eliminarSede = async (req, res) => {
     const { id } = req.params;
     const { error } = await supabase
       .from('sedes')
-      .delete()
+      .update({
+        is_deleted: true,
+        deleted_at: new Date().toISOString()
+      })
       .eq('id', id);
 
     if (error) throw error;
     res.json({ message: 'Sede eliminada correctamente' });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+// RESTAURAR SEDE (Recuperar soft deleted)
+export const restaurarSede = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { error } = await supabase
+      .from('sedes')
+      .update({
+        is_deleted: false,
+        deleted_at: null
+      })
+      .eq('id', id);
+
+    if (error) throw error;
+    res.json({ message: 'Sede restaurada correctamente' });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }

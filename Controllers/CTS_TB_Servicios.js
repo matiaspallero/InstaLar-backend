@@ -10,6 +10,7 @@ export const obtenerServicios = async (req, res) => {
         sedes(nombre),
         tecnicos(nombre)
       `)
+      .eq('is_deleted', false)
       .neq('estado', 'pendiente') // Excluimos los pendientes
       .order('created_at', { ascending: false });
 
@@ -32,6 +33,7 @@ export const obtenerServicioPorId = async (req, res) => {
         tecnicos(nombre)
       `)
       .eq('id', id)
+      .eq('is_deleted', false)
       .single();
 
     if (error) throw error;
@@ -65,6 +67,7 @@ export const obtenerMisServicios = async (req, res) => {
         sedes (nombre, direccion)
       `)
       .eq('cliente_id', datosCliente.id) // <--- EL FILTRO CLAVE
+      .eq('is_deleted', false)
       .order('created_at', { ascending: false });
 
     if (errorServicios) throw errorServicios;
@@ -133,11 +136,33 @@ export const eliminarServicio = async (req, res) => {
     const { id } = req.params;
     const { error } = await supabase
       .from('servicios')
-      .delete()
+      .update({
+        is_deleted: true,
+        deleted_at: new Date().toISOString()
+      })
       .eq('id', id);
 
     if (error) throw error;
     res.json({ message: 'Servicio eliminado correctamente' });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+// RESTAURAR SERVICIO (Recuperar soft deleted)
+export const restaurarServicio = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { error } = await supabase
+      .from('servicios')
+      .update({
+        is_deleted: false,
+        deleted_at: null
+      })
+      .eq('id', id);
+
+    if (error) throw error;
+    res.json({ message: 'Servicio restaurado correctamente' });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }

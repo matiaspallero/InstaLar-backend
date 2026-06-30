@@ -5,6 +5,7 @@ export const obtenerTecnicos = async (req, res) => {
     const { data, error } = await supabase
       .from('tecnicos')
       .select('*')
+      .eq('is_deleted', false)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -23,6 +24,7 @@ export const obtenerTecnicoPorId = async (req, res) => {
       .from('tecnicos')
       .select('*')
       .eq('id', id)
+      .eq('is_deleted', false)
       .single();
 
     if (error) {
@@ -83,11 +85,33 @@ export const eliminarTecnico = async (req, res) => {
     const { id } = req.params;
     const { error } = await supabase
       .from('tecnicos')
-      .delete()
+      .update({
+        is_deleted: true,
+        deleted_at: new Date().toISOString()
+      })
       .eq('id', id);
 
     if (error) throw error;
     res.json({ success: true, message: 'Técnico eliminado correctamente' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+// RESTAURAR TÉCNICO (Recuperar soft deleted)
+export const restaurarTecnico = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { error } = await supabase
+      .from('tecnicos')
+      .update({
+        is_deleted: false,
+        deleted_at: null
+      })
+      .eq('id', id);
+
+    if (error) throw error;
+    res.json({ success: true, message: 'Técnico restaurado' });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -99,6 +123,7 @@ export const obtenerTecnicosDisponibles = async (req, res) => {
       .from('tecnicos')
       .select('*')
       .eq('estado', 'disponible')
+      .eq('is_deleted', false)
       .order('calificacion', { ascending: false });
 
     if (error) throw error;

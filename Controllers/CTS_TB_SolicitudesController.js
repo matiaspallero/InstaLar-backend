@@ -28,6 +28,9 @@ export const obtenerSolicitudes = async (req, res) => {
        query = query.eq('tecnico_id', user.id);
     }
 
+    // Filtrar solicitudes no eliminadas (soft delete)
+    query = query.eq('is_deleted', false);
+
     const { data, error } = await query;
     if (error) throw error;
 
@@ -50,6 +53,7 @@ export const obtenerSolicitudPorId = async (req, res) => {
         tecnicos:tecnico_id (nombre, email)
       `)
       .eq('id', id)
+      .eq('is_deleted', false)
       .single();
 
     if (error) return res.status(404).json({ success: false, message: 'Solicitud no encontrada' });
@@ -124,11 +128,33 @@ export const eliminarSolicitud = async (req, res) => {
     const { id } = req.params;
     const { error } = await supabase
       .from('solicitudes')
-      .delete()
+      .update({
+        is_deleted: true,
+        deleted_at: new Date().toISOString()
+      })
       .eq('id', id);
 
     if (error) throw error;
     res.json({ success: true, message: 'Solicitud eliminada' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// RESTAURAR SOLICITUD (Recuperar soft deleted)
+export const restaurarSolicitud = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { error } = await supabase
+      .from('solicitudes')
+      .update({
+        is_deleted: false,
+        deleted_at: null
+      })
+      .eq('id', id);
+
+    if (error) throw error;
+    res.json({ success: true, message: 'Solicitud restaurada' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

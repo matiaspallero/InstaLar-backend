@@ -6,6 +6,7 @@ export const obtenerEquipos = async (req, res) => {
         const { data, error } = await supabase
             .from('equipos')
             .select('*')
+            .eq('is_deleted', false)
             .order('created_at', { ascending: false });
 
         if (error) {
@@ -30,6 +31,7 @@ export const obtenerEquipoPorId = async (req, res) => {
             .from('equipos')
             .select('*')
             .eq('id', id)
+            .eq('is_deleted', false)
             .single();
 
         if (equipoError) {
@@ -81,6 +83,7 @@ export const obtenerEquiposPorSede = async (req, res) => {
             .from('equipos')
             .select('*')
             .eq('sede_id', sede_id)
+            .eq('is_deleted', false)
             .order('created_at', { ascending: false });
 
         if (error) {
@@ -102,6 +105,7 @@ export const obtenerEquiposPorCliente = async (req, res) => {
             .from('equipos')
             .select('*')
             .eq('cliente_id', cliente_id)
+            .eq('is_deleted', false)
             .order('created_at', { ascending: false });
 
         if (error) {
@@ -123,6 +127,7 @@ export const obtenerEquipoPorSerie = async (req, res) => {
             .from('equipos')
             .select('*')
             .eq('serie', serie)
+            .eq('is_deleted', false)
             .single();
 
         if (error) {
@@ -280,7 +285,10 @@ export const eliminarEquipo = async (req, res) => {
 
         const { data, error } = await supabase
             .from('equipos')
-            .delete()
+            .update({
+                is_deleted: true,
+                deleted_at: new Date().toISOString()
+            })
             .eq('id', id)
             .select();
 
@@ -293,6 +301,34 @@ export const eliminarEquipo = async (req, res) => {
         }
 
         res.json({ mensaje: 'Equipo eliminado correctamente', equipo: data[0] });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// RESTAURAR EQUIPO (Recuperar soft deleted)
+export const restaurarEquipo = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const { data, error } = await supabase
+            .from('equipos')
+            .update({
+                is_deleted: false,
+                deleted_at: null
+            })
+            .eq('id', id)
+            .select();
+
+        if (error) {
+            return res.status(400).json({ error: error.message });
+        }
+
+        if (data.length === 0) {
+            return res.status(404).json({ error: 'Equipo no encontrado' });
+        }
+
+        res.json({ mensaje: 'Equipo restaurado correctamente', equipo: data[0] });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

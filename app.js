@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import router from './Routes/routes.js';
+import { supabase } from './config/supabase.js';
 
 dotenv.config();
 
@@ -25,6 +26,24 @@ app.use(express.urlencoded({ extended: true }));
 app.use((req, res, next) => {
   // console.log(`${req.method} ${req.path}`);
   next();
+});
+
+// Keepalive para evitar pausa por inactividad
+app.get('/api/keepalive', async (req, res) => {
+  try {
+    const { error } = await supabase
+      .from('clientes')
+      .select('id', { count: 'exact', head: true })
+      .limit(1);
+
+    if (error) {
+      return res.status(500).json({ ok: false, error: error.message });
+    }
+
+    return res.json({ ok: true, ts: new Date().toISOString() });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message });
+  }
 });
 
 // Montar todas las rutas bajo /api

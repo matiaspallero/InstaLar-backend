@@ -5,6 +5,7 @@ export const obtenerClientes = async (req, res) => {
     const { data, error } = await supabase
       .from('clientes')
       .select('*')
+      .eq('is_deleted', false)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -21,6 +22,7 @@ export const obtenerClientePorId = async (req, res) => {
       .from('clientes')
       .select('*')
       .eq('id', id)
+      .eq('is_deleted', false)
       .single();
 
     if (error) {
@@ -42,17 +44,17 @@ export const crearCliente = async (req, res) => {
     // Recibimos los datos del formulario de registro
     // nombre = Nombre de la persona (Contacto)
     // empresa = Nombre de la empresa
-    const { nombre, empresa, email, telefono, direccion, usuario_id } = req.body;
+    const { nombre, contacto, empresa, email, telefono, direccion, ciudad, ruc, usuario_id } = req.body;
 
     // MAPEO DE DATOS: Ajustamos lo que llega a las columnas de TU tabla
     const datosParaDB = {
       nombre: empresa || nombre, // Columna 'nombre' = Nombre de la Empresa
-      contacto: nombre,          // Columna 'contacto' = Nombre de la Persona
+      contacto: contacto || nombre, // Columna 'contacto' = Nombre de la Persona
       email,
       telefono,
       direccion,
-      ciudad: 'Sin especificar', // Valor por defecto (puedes cambiarlo)
-      ruc: '00000000000',        // Valor por defecto
+      ciudad: ciudad || 'Sin especificar', // Valor por defecto si no viene en req.body
+      ruc: ruc || '00000000000',        // Valor por defecto si no viene en req.body
       usuario_id: usuario_id || null
     };
 
@@ -105,11 +107,33 @@ export const eliminarCliente = async (req, res) => {
     const { id } = req.params;
     const { error } = await supabase
       .from('clientes')
-      .delete()
+      .update({
+        is_deleted: true,
+        deleted_at: new Date().toISOString()
+      })
       .eq('id', id);
 
     if (error) throw error;
     res.json({ success: true, message: 'Cliente eliminado correctamente' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+// RESTAURAR CLIENTE (Recuperar soft deleted)
+export const restaurarCliente = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { error } = await supabase
+      .from('clientes')
+      .update({
+        is_deleted: false,
+        deleted_at: null
+      })
+      .eq('id', id);
+
+    if (error) throw error;
+    res.json({ success: true, message: 'Cliente restaurado' });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
